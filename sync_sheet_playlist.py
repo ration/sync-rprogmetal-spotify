@@ -39,9 +39,13 @@ def get_album_list_from_sheet():
 def add_albums_to_spotify_playlist(sp, username, playlist_id, albums):
     for album in albums:
         ids = []
-        tracks = sp.album_tracks(album)
-        for track in tracks['items']:
-            ids.append(track['id'])
+        sp_album = sp.album_tracks(album)
+        if 'items' in sp_album:
+            for track in sp_album['items']:            
+                ids.append(track['id'])
+        elif 'tracks' in sp_album:
+            for track in sp_album['tracks']['items']:
+                ids.append(track['id'])
         sp.user_playlist_add_tracks(username, playlist_id, ids)
 
         
