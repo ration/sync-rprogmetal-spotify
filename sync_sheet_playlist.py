@@ -27,7 +27,7 @@ def get_spotify_playlist_tracks(sp, playlist, offset=0):
 def get_album_list_from_sheet():
     google_sheet_data = json.loads(requests.get(GOOGLE_SHEET).text)
     albums = []
-    album_re = re.compile("spotify\.com\/album\/(.*?)\"")
+    album_re = re.compile("spotify\.com\/album\/(.*?)[\"|\?]")
     for entry in google_sheet_data['feed']['entry']:
         cell = entry['gs$cell']
         spotify_match = album_re.search(cell['inputValue'])
@@ -56,8 +56,11 @@ token = util.prompt_for_user_token(USER_ID, scope)
 if token:
     sp = spotipy.Spotify(auth=token)
     spotify_list_albums = get_spotify_playlist_tracks(sp=sp, playlist=PLAYLIST, offset=0)
+    #print(spotify_list_albums)
     google_sheet_albums = get_album_list_from_sheet()
+    #print(google_sheet_albums)
     missing = set(google_sheet_albums) - set(spotify_list_albums)
+    print("Added %s" % str(missing))
     add_albums_to_spotify_playlist(sp=sp, username=USER_ID, playlist_id=PLAYLIST,albums=missing)
 
 
