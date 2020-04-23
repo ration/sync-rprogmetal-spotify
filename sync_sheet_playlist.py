@@ -10,6 +10,7 @@ import spotipy.util as util
 import re
 
 GOOGLE_SHEET="https://spreadsheets.google.com/feeds/cells/1fQFg52uaojpRCz29EzSHVpsX5SYVJ2VN8IuKs9XA5W8/1/public/full?alt=json"
+GOOGLE_SHEET_PROGROG="https://spreadsheets.google.com/feeds/cells/1fQFg52uaojpRCz29EzSHVpsX5SYVJ2VN8IuKs9XA5W8/2/public/full?alt=json"
 PLAYLIST="1JhoE1TBSTYsP3i2l5F5Yd" # https://open.spotify.com/playlist/1JhoE1TBSTYsP3i2l5F5Yd?si=BF_eFvalTx6wfFByf7PfIA
 USER_ID="ttration"
 
@@ -24,8 +25,8 @@ def get_spotify_playlist_tracks(sp, playlist, offset=0):
         spotify_list_albums = spotify_list_albums + get_spotify_playlist_tracks(sp, playlist, offset+100)
     return spotify_list_albums
     
-def get_album_list_from_sheet():
-    google_sheet_data = json.loads(requests.get(GOOGLE_SHEET).text)
+def get_album_list_from_sheet(sheet):
+    google_sheet_data = json.loads(requests.get(sheet).text)
     albums = []
     album_re = re.compile("spotify\.com\/album\/(.*?)[\"|\?]")
     for entry in google_sheet_data['feed']['entry']:
@@ -48,19 +49,17 @@ def add_albums_to_spotify_playlist(sp, username, playlist_id, albums):
                 ids.append(track['id'])
         sp.user_playlist_add_tracks(username, playlist_id, ids)
 
-        
-
 scope = 'playlist-modify-public'
 token = util.prompt_for_user_token(USER_ID, scope)
 
 if token:
     sp = spotipy.Spotify(auth=token)
     spotify_list_albums = get_spotify_playlist_tracks(sp=sp, playlist=PLAYLIST, offset=0)
-    #print(spotify_list_albums)
-    google_sheet_albums = get_album_list_from_sheet()
+    google_sheet_albums = get_album_list_from_sheet(GOOGLE_SHEET) + get_album_list_from_sheet(GOOGLE_SHEET_PROGROG)
     #print(google_sheet_albums)
     missing = set(google_sheet_albums) - set(spotify_list_albums)
-    print("Added %s" % str(missing))
-    add_albums_to_spotify_playlist(sp=sp, username=USER_ID, playlist_id=PLAYLIST,albums=missing)
+    if len(missing) > 0:
+        print("Added %s" % str(missing))
+        add_albums_to_spotify_playlist(sp=sp, username=USER_ID, playlist_id=PLAYLIST,albums=missing)
 
 
